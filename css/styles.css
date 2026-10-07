@@ -243,3 +243,63 @@ footer {
     .detail { padding: 12px; }
     .dynamic-grid { grid-template-columns: 1fr; }
 }
+/* ============================================================
+   CONTROLES DE CANTIDAD
+   ============================================================ */
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 8px;
+    width: 100%;
+}
+
+
+.quantity-control input {
+    width: 80px !important;
+    min-width: 80px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    padding: 12px !important;
+}
+
+
+.quantity-button {
+    width: 52px;
+    height: 52px;
+    border: none;
+    border-radius: 50%;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+
+.quantity-button:active {
+    transform: scale(0.92);
+}
+
+
+@media (max-width: 600px) {
+
+    .quantity-control {
+        gap: 16px;
+    }
+
+
+    .quantity-button {
+        width: 56px;
+        height: 56px;
+        font-size: 30px;
+    }
+
+
+    .quantity-control input {
+        width: 75px !important;
+        font-size: 22px;
+    }
+}
