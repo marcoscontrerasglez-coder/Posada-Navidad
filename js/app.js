@@ -475,6 +475,24 @@ function generarParticipantesChaleco() {
 
 function prepararFormulario() {
 
+        // ========================================================
+    // CONTROLES DE CANTIDAD
+    // ========================================================
+
+    crearControlesCantidad(
+        "cantidadAcompanantes",
+        1,
+        20,
+        generarAcompanantes
+    );
+
+
+    crearControlesCantidad(
+        "cantidadChalecos",
+        1,
+        20,
+        generarParticipantesChaleco
+    );
 
     // ========================================================
     // ASISTENCIA
@@ -960,6 +978,166 @@ function prepararBotones() {
         );
 }
 
+// ============================================================
+// CONTROLES + / - PARA CELULAR
+// ============================================================
+
+function crearControlesCantidad(
+    inputId,
+    minimo,
+    maximo,
+    callback
+) {
+
+    const input =
+        $(inputId);
+
+    if (!input) {
+        return;
+    }
+
+
+    // Evitar duplicar controles
+
+    if (
+        input.parentElement
+            .querySelector(
+                ".quantity-control"
+            )
+    ) {
+        return;
+    }
+
+
+    const wrapper =
+        document.createElement("div");
+
+    wrapper.className =
+        "quantity-control";
+
+
+    const botonMenos =
+        document.createElement("button");
+
+    botonMenos.type =
+        "button";
+
+    botonMenos.className =
+        "quantity-button";
+
+    botonMenos.textContent =
+        "−";
+
+
+    const botonMas =
+        document.createElement("button");
+
+    botonMas.type =
+        "button";
+
+    botonMas.className =
+        "quantity-button";
+
+    botonMas.textContent =
+        "+";
+
+
+    input.parentNode.insertBefore(
+        wrapper,
+        input
+    );
+
+
+    wrapper.appendChild(
+        botonMenos
+    );
+
+
+    wrapper.appendChild(
+        input
+    );
+
+
+    wrapper.appendChild(
+        botonMas
+    );
+
+
+    function actualizar() {
+
+        let valor =
+            parseInt(
+                input.value
+            ) || minimo;
+
+
+        if (valor < minimo) {
+            valor = minimo;
+        }
+
+
+        if (valor > maximo) {
+            valor = maximo;
+        }
+
+
+        input.value =
+            valor;
+
+
+        if (callback) {
+            callback();
+        }
+    }
+
+
+    botonMenos.addEventListener(
+        "click",
+        () => {
+
+            let valor =
+                parseInt(
+                    input.value
+                ) || minimo;
+
+
+            if (valor > minimo) {
+
+                input.value =
+                    valor - 1;
+
+                actualizar();
+            }
+        }
+    );
+
+
+    botonMas.addEventListener(
+        "click",
+        () => {
+
+            let valor =
+                parseInt(
+                    input.value
+                ) || minimo;
+
+
+            if (valor < maximo) {
+
+                input.value =
+                    valor + 1;
+
+                actualizar();
+            }
+        }
+    );
+
+
+    input.addEventListener(
+        "change",
+        actualizar
+    );
+}
 
 // ============================================================
 // INICIO
