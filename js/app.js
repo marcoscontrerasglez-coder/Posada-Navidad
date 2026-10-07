@@ -555,13 +555,11 @@ async function enviarConfirmacion(event) {
 
     event.preventDefault();
 
-
     const boton =
         $("formAsistencia")
             .querySelector(
                 'button[type="submit"]'
             );
-
 
     boton.disabled = true;
 
@@ -570,7 +568,6 @@ async function enviarConfirmacion(event) {
 
 
     try {
-
 
         // ====================================================
         // DATOS PRINCIPALES
@@ -592,12 +589,9 @@ async function enviarConfirmacion(event) {
                 "Por favor indica tu nombre."
             );
 
-            boton.disabled = false;
-
-            boton.textContent =
-                "✅ Confirmar datos";
-
-            return;
+            throw new Error(
+                "Nombre vacío"
+            );
         }
 
 
@@ -607,12 +601,9 @@ async function enviarConfirmacion(event) {
                 "Selecciona si asistirás."
             );
 
-            boton.disabled = false;
-
-            boton.textContent =
-                "✅ Confirmar datos";
-
-            return;
+            throw new Error(
+                "Asistencia no seleccionada"
+            );
         }
 
 
@@ -694,74 +685,53 @@ async function enviarConfirmacion(event) {
 
 
         // ====================================================
-        // OBJETO A ENVIAR
+        // OBJETO
         // ====================================================
 
         const datos = {
 
-            nombre:
-
-                nombre,
-
+            nombre: nombre,
 
             asistencia:
-
                 asistira === "si"
                     ? "SI"
                     : "NO",
 
-
             acompanantes:
-
                 asistira === "si"
                     ? nombresAcompanantes.length
                     : 0,
 
-
             nombresAcompanantes:
-
                 asistira === "si"
                     ? nombresAcompanantes.join(", ")
                     : "",
 
-
             participaChalecos:
-
                 asistira === "si" &&
                 $("participaChalecos").value === "si"
-
                     ? "SI"
-
                     : "NO",
 
-
             participantesChalecos:
-
                 asistira === "si" &&
                 $("participaChalecos").value === "si"
-
                     ? participantesChalecos.length
-
                     : 0,
 
-
             detalleChalecos:
-
                 participantesChalecos.length > 0
-
                     ? participantesChalecos
-                        .map(
-                            persona =>
-                                `${persona.nombre} | ${persona.talla} | ${persona.color}`
+                        .map(persona =>
+                            `${persona.nombre} | ${persona.talla} | ${persona.color}`
                         )
                         .join(" || ")
-
                     : ""
         };
 
 
         console.log(
-            "Datos enviados:",
+            "Datos a enviar:",
             datos
         );
 
@@ -770,64 +740,36 @@ async function enviarConfirmacion(event) {
         // ENVIAR A GOOGLE APPS SCRIPT
         // ====================================================
 
-        const respuesta =
-            await fetch(
-                API_URL,
-                {
-                    method: "POST",
+        await fetch(
+            API_URL,
+            {
+                method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-                    },
+                mode: "no-cors",
 
-                    body:
-                        JSON.stringify(datos)
-                }
-            );
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
 
-
-        const texto =
-            await respuesta.text();
-
-
-        console.log(
-            "Respuesta Google:",
-            texto
+                body:
+                    JSON.stringify(datos)
+            }
         );
 
 
-        let resultado;
-
-
-        try {
-
-            resultado =
-                JSON.parse(texto);
-
-        } catch {
-
-            resultado = {
-                status: "OK"
-            };
-        }
-
-
-        if (
-            resultado.status &&
-            resultado.status !== "OK"
-        ) {
-
-            throw new Error(
-                resultado.message ||
-                "Google Apps Script devolvió un error."
-            );
-        }
-
-
         // ====================================================
-        // MENSAJE EXITOSO
+        // IMPORTANTE
         // ====================================================
+        //
+        // Con no-cors el navegador no permite leer
+        // la respuesta de Google.
+        //
+        // Lo que nos interesa es que el POST haya
+        // sido enviado al Web App.
+        //
+        // ====================================================
+
 
         $("resultado")
             .classList
@@ -855,24 +797,31 @@ async function enviarConfirmacion(event) {
             });
 
 
-        // Limpiar formulario
+        // ====================================================
+        // LIMPIAR FORMULARIO
+        // ====================================================
 
         $("formAsistencia").reset();
+
 
         $("datosAsistencia")
             .classList
             .add("hidden");
 
+
         $("cantidadAcompanantesWrap")
             .classList
             .add("hidden");
+
 
         $("chalecosContainer")
             .classList
             .add("hidden");
 
+
         $("acompanantesContainer")
             .innerHTML = "";
+
 
         $("participantesChaleco")
             .innerHTML = "";
@@ -882,15 +831,23 @@ async function enviarConfirmacion(event) {
     catch (error) {
 
         console.error(
-            "Error al registrar:",
+            "Error al enviar:",
             error
         );
 
 
-        alert(
-            "No fue posible registrar la confirmación.\n\n" +
-            "Verifica la conexión e intenta nuevamente."
-        );
+        if (
+            error.message !==
+            "Nombre vacío" &&
+            error.message !==
+            "Asistencia no seleccionada"
+        ) {
+
+            alert(
+                "No fue posible registrar la confirmación.\n\n" +
+                "Por favor intenta nuevamente."
+            );
+        }
 
     }
     finally {
