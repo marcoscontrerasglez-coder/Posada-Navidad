@@ -6,7 +6,7 @@
 const POSADA_CONFIG = {
     nombre: "Posada Navideña 2026",
     fecha: "2026-12-24",
-    hora: "20:00",
+    hora: "21:00",
     lugar: "Salón de Eventos Komanche",
     direccion: "Av. Siempre viva, Querétaro, Qro.",
 
