@@ -1,850 +1,1017 @@
-document.addEventListener("DOMContentLoaded", () => {
+// ============================================================
+// INVITACIÓN POSADA NAVIDEÑA
+// V2 - GOOGLE SHEETS
+// ============================================================
 
-    // ============================================================
-    // CONFIGURACIÓN
-    // ============================================================
+// ============================================================
+// CONFIGURACIÓN GOOGLE APPS SCRIPT
+// ============================================================
 
     const API_URL = "https://script.google.com/macros/s/AKfycbzZCIlr-6a64alwZslgsZ2pX2UbBUvHukkvxv9rTfiug8jU5r72J3i7JyPNkehYGTrT/exec";
 
-    // ============================================================
-    // ELEMENTOS
-    // ============================================================
 
-    const nombreEvento = document.getElementById("nombreEvento");
-    const fechaEvento = document.getElementById("fechaEvento");
-    const horaEvento = document.getElementById("horaEvento");
-    const lugarEvento = document.getElementById("lugarEvento");
-    const direccionEvento = document.getElementById("direccionEvento");
-    const mensajeEvento = document.getElementById("mensajeEvento");
 
-    const mapa = document.getElementById("mapa");
-    const btnUbicacion = document.getElementById("btnUbicacion");
-    const btnMusica = document.getElementById("btnMusica");
-    const btnConfirmar = document.getElementById("btnConfirmar");
+// ============================================================
+// FUNCIONES GENERALES
+// ============================================================
 
-    const formulario = document.getElementById("formularioAsistencia");
+const $ = (id) => document.getElementById(id);
 
-    // ============================================================
-    // CARGAR CONFIGURACIÓN DEL EVENTO
-    // ============================================================
 
-    if (typeof POSADA_CONFIG !== "undefined") {
+// ============================================================
+// FORMATO DE FECHA
+// ============================================================
 
-        if (nombreEvento) {
-            nombreEvento.textContent = POSADA_CONFIG.nombre;
-        }
+function formatDate(value) {
 
-        if (fechaEvento) {
-            fechaEvento.textContent = formatearFecha(POSADA_CONFIG.fecha);
-        }
-
-        if (horaEvento) {
-            horaEvento.textContent = POSADA_CONFIG.hora;
-        }
-
-        if (lugarEvento) {
-            lugarEvento.textContent = POSADA_CONFIG.lugar;
-        }
-
-        if (direccionEvento) {
-            direccionEvento.textContent = POSADA_CONFIG.direccion;
-        }
-
-        if (mensajeEvento) {
-            mensajeEvento.textContent = POSADA_CONFIG.mensaje;
-        }
-
-        cargarMapa();
+    if (!value) {
+        return "Por definir";
     }
 
-    // ============================================================
-    // FECHA
-    // ============================================================
+    const [year, month, day] =
+        value.split("-").map(Number);
 
-    function formatearFecha(fecha) {
+    return new Intl.DateTimeFormat("es-MX", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        timeZone: "UTC"
+    }).format(
+        new Date(
+            Date.UTC(
+                year,
+                month - 1,
+                day
+            )
+        )
+    );
+}
 
-        const fechaObj = new Date(`${fecha}T12:00:00`);
 
-        return fechaObj.toLocaleDateString("es-MX", {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-        });
-    }
+// ============================================================
+// CARGAR INFORMACIÓN DE LA POSADA
+// ============================================================
 
-    // ============================================================
+function cargarInvitacion() {
+
+    $("nombrePosada").textContent =
+        POSADA_CONFIG.nombre;
+
+    $("mensajePosada").textContent =
+        POSADA_CONFIG.mensaje;
+
+    $("fechaPosada").textContent =
+        formatDate(
+            POSADA_CONFIG.fecha
+        );
+
+    $("horaPosada").textContent =
+        POSADA_CONFIG.hora + " hrs";
+
+    $("lugarPosada").textContent =
+        POSADA_CONFIG.lugar;
+
+    $("direccionPosada").textContent =
+        POSADA_CONFIG.direccion;
+
+
+    // ========================================================
     // GOOGLE MAPS
-    // ============================================================
+    // ========================================================
 
-    function cargarMapa() {
-
-        if (!mapa || typeof POSADA_CONFIG === "undefined") {
-            return;
-        }
-
-        const direccion = encodeURIComponent(
+    const mapaQuery =
+        encodeURIComponent(
             POSADA_CONFIG.direccion
         );
 
-        mapa.src =
-            `https://www.google.com/maps?q=${direccion}&output=embed`;
-    }
+    $("mapa").src =
+        "https://www.google.com/maps?q=" +
+        mapaQuery +
+        "&output=embed";
 
-    // ============================================================
-    // BOTÓN UBICACIÓN
-    // ============================================================
 
-    if (btnUbicacion) {
-
-        btnUbicacion.addEventListener("click", () => {
-
-            if (
-                typeof POSADA_CONFIG !== "undefined" &&
-                POSADA_CONFIG.googleMapsUrl
-            ) {
-
-                window.open(
-                    POSADA_CONFIG.googleMapsUrl,
-                    "_blank"
-                );
-
-            } else {
-
-                const direccion =
-                    encodeURIComponent(
-                        POSADA_CONFIG.direccion
-                    );
-
-                window.open(
-                    `https://www.google.com/maps/search/?api=1&query=${direccion}`,
-                    "_blank"
-                );
-            }
-        });
-    }
-
-    // ============================================================
+    // ========================================================
     // MÚSICA
-    // ============================================================
+    // ========================================================
 
-    let audio = null;
-    let reproduciendo = false;
+    const audio =
+        $("audioNavidad");
 
-    if (typeof POSADA_CONFIG !== "undefined" &&
-        POSADA_CONFIG.musica) {
+    audio.src =
+        "assets/" +
+        POSADA_CONFIG.musica;
 
-        audio = new Audio(
-            `assets/${POSADA_CONFIG.musica}`
-        );
 
-        audio.loop = true;
-    }
+    // ========================================================
+    // ESTILO
+    // ========================================================
 
-    if (btnMusica) {
+    aplicarEstilo(
+        POSADA_CONFIG.estilo
+    );
+}
 
-        btnMusica.addEventListener("click", () => {
 
-            if (!audio) {
-                alert("No se encontró el archivo de música.");
-                return;
-            }
+// ============================================================
+// ESTILOS
+// ============================================================
 
-            if (!reproduciendo) {
+function aplicarEstilo(estilo) {
 
-                audio.play()
-                    .then(() => {
+    const hero =
+        document.querySelector(".hero");
 
-                        reproduciendo = true;
+    const estilos = {
 
-                        btnMusica.textContent =
-                            "🔇 Pausar música";
+        elegante:
+            "linear-gradient(145deg,#0d2d22,#174d38 55%,#721925)",
 
-                    })
-                    .catch(() => {
+        tradicional:
+            "linear-gradient(145deg,#7c1623,#b12432 50%,#174d38)",
 
-                        alert(
-                            "No fue posible reproducir la música. " +
-                            "Verifica que navidad.mp3 exista en la carpeta assets."
-                        );
+        nieve:
+            "linear-gradient(145deg,#17354d,#37738e 55%,#203f5a)",
 
-                    });
+        oscuro:
+            "linear-gradient(145deg,#111,#382126 55%,#111)",
 
-            } else {
+        festivo:
+            "linear-gradient(145deg,#7c1623,#174d38 50%,#b6811d)"
+    };
 
-                audio.pause();
+    hero.style.background =
+        estilos[estilo] ||
+        estilos.elegante;
+}
 
-                reproduciendo = false;
 
-                btnMusica.textContent =
-                    "🎵 Música";
-            }
-        });
-    }
+// ============================================================
+// CONTADOR
+// ============================================================
 
-    // ============================================================
-    // COUNTDOWN
-    // ============================================================
+function iniciarContador() {
 
-    iniciarCuentaRegresiva();
+    function actualizar() {
 
-    function iniciarCuentaRegresiva() {
+        const fecha =
+            POSADA_CONFIG.fecha +
+            "T" +
+            POSADA_CONFIG.hora +
+            ":00";
 
-        const countdown =
-            document.getElementById("countdown");
+        const objetivo =
+            new Date(fecha).getTime();
 
-        if (!countdown ||
-            typeof POSADA_CONFIG === "undefined") {
+        const ahora =
+            Date.now();
+
+        const diferencia =
+            objetivo - ahora;
+
+
+        if (Number.isNaN(objetivo)) {
+
+            $("contador").textContent =
+                "";
+
             return;
         }
 
-        const fechaObjetivo =
-            new Date(
-                `${POSADA_CONFIG.fecha}T${POSADA_CONFIG.hora}:00`
+
+        if (diferencia <= 0) {
+
+            $("contador").textContent =
+                "🎉 ¡La celebración ha llegado!";
+
+            return;
+        }
+
+
+        const dias =
+            Math.floor(
+                diferencia / 86400000
             );
 
-        function actualizar() {
+        const horas =
+            Math.floor(
+                (diferencia % 86400000) /
+                3600000
+            );
 
-            const ahora = new Date();
+        const minutos =
+            Math.floor(
+                (diferencia % 3600000) /
+                60000
+            );
 
-            const diferencia =
-                fechaObjetivo - ahora;
-
-            if (diferencia <= 0) {
-
-                countdown.textContent =
-                    "🎄 ¡La posada ha comenzado!";
-
-                return;
-            }
-
-            const dias =
-                Math.floor(
-                    diferencia /
-                    (1000 * 60 * 60 * 24)
-                );
-
-            const horas =
-                Math.floor(
-                    (diferencia /
-                        (1000 * 60 * 60)) % 24
-                );
-
-            const minutos =
-                Math.floor(
-                    (diferencia /
-                        (1000 * 60)) % 60
-                );
-
-            const segundos =
-                Math.floor(
-                    (diferencia / 1000) % 60
-                );
-
-            countdown.textContent =
-                `${dias} días · ${horas} horas · ` +
-                `${minutos} minutos · ${segundos} segundos`;
-        }
-
-        actualizar();
-
-        setInterval(actualizar, 1000);
+        $("contador").textContent =
+            `Faltan ${dias} días, ` +
+            `${horas} horas y ` +
+            `${minutos} minutos`;
     }
 
-    // ============================================================
-    // MOSTRAR FORMULARIO
-    // ============================================================
 
-    if (btnConfirmar) {
+    actualizar();
 
-        btnConfirmar.addEventListener("click", () => {
+    setInterval(
+        actualizar,
+        60000
+    );
+}
 
-            const seccion =
-                document.getElementById(
-                    "seccionConfirmacion"
-                );
 
-            if (seccion) {
+// ============================================================
+// ABRIR FORMULARIO
+// ============================================================
 
-                seccion.style.display = "block";
+function abrirFormulario() {
 
-                seccion.scrollIntoView({
-                    behavior: "smooth"
-                });
-            }
+    $("formularioSeccion")
+        .classList
+        .remove("hidden");
+
+    $("formularioSeccion")
+        .scrollIntoView({
+            behavior: "smooth",
+            block: "start"
         });
+}
+
+
+// ============================================================
+// ACOMPAÑANTES
+// ============================================================
+
+function actualizarAcompanantes() {
+
+    const lleva =
+        $("llevaAcompanantes").value === "1";
+
+
+    $("cantidadAcompanantesWrap")
+        .classList
+        .toggle(
+            "hidden",
+            !lleva
+        );
+
+
+    if (!lleva) {
+
+        $("acompanantesContainer")
+            .innerHTML = "";
+
+        return;
     }
 
-    // ============================================================
-    // ASISTENCIA
-    // ============================================================
 
-    const asistencia =
-        document.getElementById("asistencia");
+    generarAcompanantes();
+}
 
-    const bloqueAcompanantes =
-        document.getElementById(
-            "bloqueAcompanantes"
+
+// ============================================================
+// GENERAR ACOMPAÑANTES
+// ============================================================
+
+function generarAcompanantes() {
+
+    const cantidad =
+        Math.min(
+            Math.max(
+                Number(
+                    $("cantidadAcompanantes").value
+                ) || 1,
+                1
+            ),
+            20
         );
 
-    const cantidadAcompanantes =
-        document.getElementById(
-            "cantidadAcompanantes"
-        );
 
-    const contenedorAcompanantes =
-        document.getElementById(
-            "contenedorAcompanantes"
-        );
+    $("cantidadAcompanantes").value =
+        cantidad;
 
-    const bloqueChalecos =
-        document.getElementById(
-            "bloqueChalecos"
-        );
 
-    const participaChalecos =
-        document.getElementById(
-            "participaChalecos"
-        );
+    const container =
+        $("acompanantesContainer");
 
-    const cantidadChalecos =
-        document.getElementById(
-            "cantidadChalecos"
-        );
+    container.innerHTML = "";
 
-    const contenedorChalecos =
-        document.getElementById(
-            "contenedorChalecos"
-        );
 
-    // ============================================================
-    // CAMBIO DE ASISTENCIA
-    // ============================================================
+    for (
+        let i = 1;
+        i <= cantidad;
+        i++
+    ) {
 
-    if (asistencia) {
+        const card =
+            document.createElement("div");
 
-        asistencia.addEventListener(
-            "change",
-            () => {
+        card.className =
+            "dynamic-card";
 
-                if (asistencia.value === "si") {
 
-                    if (bloqueAcompanantes) {
-                        bloqueAcompanantes.style.display =
-                            "block";
-                    }
+        card.innerHTML = `
 
-                    if (bloqueChalecos) {
-                        bloqueChalecos.style.display =
-                            "block";
-                    }
+            <h3>👤 Acompañante ${i}</h3>
 
-                } else {
+            <label>
+                Nombre
 
-                    if (bloqueAcompanantes) {
-                        bloqueAcompanantes.style.display =
-                            "none";
-                    }
+                <input
+                    type="text"
+                    class="acompananteNombre"
+                    data-index="${i}"
+                    maxlength="100"
+                    required
+                >
+            </label>
 
-                    if (bloqueChalecos) {
-                        bloqueChalecos.style.display =
-                            "none";
-                    }
+        `;
 
-                    limpiarAcompanantes();
-                    limpiarChalecos();
-                }
-            }
-        );
+
+        container.appendChild(card);
     }
+}
 
-    // ============================================================
-    // ACOMPAÑANTES
-    // ============================================================
 
-    if (cantidadAcompanantes) {
+// ============================================================
+// CHALECOS
+// ============================================================
 
-        cantidadAcompanantes.addEventListener(
-            "change",
-            generarAcompanantes
+function actualizarChalecos() {
+
+    const participa =
+        $("participaChalecos").value === "si";
+
+
+    $("chalecosContainer")
+        .classList
+        .toggle(
+            "hidden",
+            !participa
         );
+
+
+    if (participa) {
+
+        generarParticipantesChaleco();
+
+    } else {
+
+        $("participantesChaleco")
+            .innerHTML = "";
     }
+}
 
-    function generarAcompanantes() {
 
-        if (!contenedorAcompanantes) {
-            return;
-        }
+// ============================================================
+// GENERAR PARTICIPANTES CHALECOS
+// ============================================================
 
-        contenedorAcompanantes.innerHTML = "";
+function generarParticipantesChaleco() {
 
-        const cantidad =
-            parseInt(
-                cantidadAcompanantes.value
-            ) || 0;
+    const cantidad =
+        Math.min(
+            Math.max(
+                Number(
+                    $("cantidadChalecos").value
+                ) || 1,
+                1
+            ),
+            20
+        );
 
-        for (let i = 1; i <= cantidad; i++) {
 
-            const grupo =
-                document.createElement("div");
+    $("cantidadChalecos").value =
+        cantidad;
 
-            grupo.className =
-                "campo-dinamico";
 
-            grupo.innerHTML = `
+    const container =
+        $("participantesChaleco");
+
+    container.innerHTML = "";
+
+
+    for (
+        let i = 1;
+        i <= cantidad;
+        i++
+    ) {
+
+        const card =
+            document.createElement("div");
+
+        card.className =
+            "dynamic-card";
+
+
+        card.innerHTML = `
+
+            <h3>🧥 Participante ${i}</h3>
+
+            <div class="dynamic-grid">
+
                 <label>
-                    Nombre del acompañante ${i}
+                    Nombre
+
+                    <input
+                        type="text"
+                        class="chalecoNombre"
+                        maxlength="100"
+                        required
+                    >
                 </label>
 
-                <input
-                    type="text"
-                    class="nombreAcompanante"
-                    placeholder="Nombre completo"
-                    required
-                >
-            `;
 
-            contenedorAcompanantes.appendChild(
-                grupo
-            );
-        }
+                <label>
+                    Talla
+
+                    <select
+                        class="chalecoTalla"
+                        required
+                    >
+
+                        <option value="">
+                            Selecciona
+                        </option>
+
+                        <option>XS</option>
+                        <option>S</option>
+                        <option>M</option>
+                        <option>L</option>
+                        <option>XL</option>
+                        <option>XXL</option>
+
+                    </select>
+
+                </label>
+
+
+                <label>
+                    Color
+
+                    <input
+                        type="text"
+                        class="chalecoColor"
+                        placeholder="Ej. rojo"
+                        maxlength="40"
+                        required
+                    >
+
+                </label>
+
+            </div>
+        `;
+
+
+        container.appendChild(card);
     }
+}
 
-    function limpiarAcompanantes() {
 
-        if (cantidadAcompanantes) {
-            cantidadAcompanantes.value = "0";
-        }
+// ============================================================
+// PREPARAR FORMULARIO
+// ============================================================
 
-        if (contenedorAcompanantes) {
-            contenedorAcompanantes.innerHTML = "";
-        }
-    }
+function prepararFormulario() {
 
-    // ============================================================
-    // CHALECOS
-    // ============================================================
 
-    if (participaChalecos) {
+    // ========================================================
+    // ASISTENCIA
+    // ========================================================
 
-        participaChalecos.addEventListener(
+    $("asistira")
+        .addEventListener(
             "change",
             () => {
 
-                if (
-                    participaChalecos.value === "si"
-                ) {
+                const si =
+                    $("asistira").value === "si";
 
-                    if (cantidadChalecos) {
-                        cantidadChalecos.style.display =
-                            "block";
-                    }
 
-                    if (contenedorChalecos) {
-                        contenedorChalecos.style.display =
-                            "block";
-                    }
-
-                } else {
-
-                    if (cantidadChalecos) {
-                        cantidadChalecos.style.display =
-                            "none";
-                    }
-
-                    if (contenedorChalecos) {
-                        contenedorChalecos.style.display =
-                            "none";
-                    }
-
-                    limpiarChalecos();
-                }
+                $("datosAsistencia")
+                    .classList
+                    .toggle(
+                        "hidden",
+                        !si
+                    );
             }
         );
-    }
 
-    // ============================================================
-    // GENERAR PARTICIPANTES DE CHALECOS
-    // ============================================================
 
-    if (cantidadChalecos) {
+    // ========================================================
+    // ACOMPAÑANTES
+    // ========================================================
 
-        cantidadChalecos.addEventListener(
+    $("llevaAcompanantes")
+        .addEventListener(
             "change",
-            generarChalecos
+            actualizarAcompanantes
         );
-    }
 
-    function generarChalecos() {
 
-        if (!contenedorChalecos) {
-            return;
-        }
+    $("cantidadAcompanantes")
+        .addEventListener(
+            "input",
+            generarAcompanantes
+        );
 
-        contenedorChalecos.innerHTML = "";
 
-        const cantidad =
-            parseInt(
-                cantidadChalecos.value
-            ) || 0;
+    // ========================================================
+    // CHALECOS
+    // ========================================================
 
-        for (let i = 1; i <= cantidad; i++) {
+    $("participaChalecos")
+        .addEventListener(
+            "change",
+            actualizarChalecos
+        );
 
-            const grupo =
-                document.createElement("div");
 
-            grupo.className =
-                "chaleco-item";
+    $("cantidadChalecos")
+        .addEventListener(
+            "input",
+            generarParticipantesChaleco
+        );
 
-            grupo.innerHTML = `
-                <h4>Participante ${i}</h4>
 
-                <label>Nombre</label>
+    // ========================================================
+    // ENVÍO
+    // ========================================================
 
-                <input
-                    type="text"
-                    class="nombreChaleco"
-                    placeholder="Nombre completo"
-                    required
-                >
-
-                <label>Talla</label>
-
-                <select
-                    class="tallaChaleco"
-                    required
-                >
-                    <option value="">
-                        Seleccionar
-                    </option>
-                    <option value="XS">XS</option>
-                    <option value="S">S</option>
-                    <option value="M">M</option>
-                    <option value="L">L</option>
-                    <option value="XL">XL</option>
-                    <option value="XXL">XXL</option>
-                </select>
-
-                <label>Color</label>
-
-                <input
-                    type="text"
-                    class="colorChaleco"
-                    placeholder="Color"
-                    required
-                >
-            `;
-
-            contenedorChalecos.appendChild(
-                grupo
-            );
-        }
-    }
-
-    function limpiarChalecos() {
-
-        if (cantidadChalecos) {
-            cantidadChalecos.value = "0";
-        }
-
-        if (contenedorChalecos) {
-            contenedorChalecos.innerHTML = "";
-        }
-    }
-
-    // ============================================================
-    // ENVÍO DEL FORMULARIO
-    // ============================================================
-
-    if (formulario) {
-
-        formulario.addEventListener(
+    $("formAsistencia")
+        .addEventListener(
             "submit",
-            async (event) => {
-
-                event.preventDefault();
-
-                const boton =
-                    formulario.querySelector(
-                        'button[type="submit"]'
-                    );
-
-                if (boton) {
-                    boton.disabled = true;
-                    boton.textContent =
-                        "Enviando...";
-                }
-
-                try {
-
-                    const nombre =
-                        document.getElementById(
-                            "nombre"
-                        )?.value.trim() || "";
-
-                    const valorAsistencia =
-                        asistencia?.value || "";
-
-                    const acompanantes =
-                        parseInt(
-                            cantidadAcompanantes?.value
-                        ) || 0;
-
-                    const nombres =
-                        Array.from(
-                            document.querySelectorAll(
-                                ".nombreAcompanante"
-                            )
-                        )
-                        .map(
-                            input =>
-                                input.value.trim()
-                        )
-                        .filter(Boolean);
-
-                    const participa =
-                        participaChalecos?.value || "";
-
-                    const cantidadParticipantes =
-                        parseInt(
-                            cantidadChalecos?.value
-                        ) || 0;
-
-                    const participantes =
-                        Array.from(
-                            document.querySelectorAll(
-                                ".chaleco-item"
-                            )
-                        )
-                        .map(item => {
-
-                            const nombre =
-                                item.querySelector(
-                                    ".nombreChaleco"
-                                )?.value.trim() || "";
-
-                            const talla =
-                                item.querySelector(
-                                    ".tallaChaleco"
-                                )?.value || "";
-
-                            const color =
-                                item.querySelector(
-                                    ".colorChaleco"
-                                )?.value.trim() || "";
-
-                            return {
-                                nombre,
-                                talla,
-                                color
-                            };
-                        });
-
-                    const datos = {
-
-                        nombre: nombre,
-
-                        asistencia:
-                            valorAsistencia === "si"
-                                ? "SI"
-                                : "NO",
-
-                        acompanantes:
-                            valorAsistencia === "si"
-                                ? acompanantes
-                                : 0,
-
-                        nombresAcompanantes:
-                            valorAsistencia === "si"
-                                ? nombres.join(", ")
-                                : "",
-
-                        participaChalecos:
-                            valorAsistencia === "si"
-                                ? (
-                                    participa === "si"
-                                        ? "SI"
-                                        : "NO"
-                                )
-                                : "NO",
-
-                        participantesChalecos:
-                            valorAsistencia === "si" &&
-                            participa === "si"
-                                ? cantidadParticipantes
-                                : 0,
-
-                        detalleChalecos:
-                            valorAsistencia === "si" &&
-                            participa === "si"
-                                ? participantes
-                                    .map(p =>
-                                        `${p.nombre} | ${p.talla} | ${p.color}`
-                                    )
-                                    .join(" || ")
-                                : ""
-                    };
-
-                    // ============================================
-                    // VALIDACIÓN
-                    // ============================================
-
-                    if (!datos.nombre) {
-
-                        alert(
-                            "Por favor escribe tu nombre."
-                        );
-
-                        restaurarBoton();
-
-                        return;
-                    }
-
-                    if (!datos.asistencia) {
-
-                        alert(
-                            "Selecciona si asistirás."
-                        );
-
-                        restaurarBoton();
-
-                        return;
-                    }
-
-                    // ============================================
-                    // ENVIAR A GOOGLE SHEETS
-                    // ============================================
-
-                    const respuesta =
-                        await fetch(
-                            API_URL,
-                            {
-                                method: "POST",
-
-                                headers: {
-                                    "Content-Type":
-                                        "text/plain;charset=utf-8"
-                                },
-
-                                body:
-                                    JSON.stringify(datos)
-                            }
-                        );
-
-                    const resultado =
-                        await respuesta.json();
-
-                    if (
-                        resultado.status !== "OK"
-                    ) {
-
-                        throw new Error(
-                            resultado.message ||
-                            "Error al guardar."
-                        );
-                    }
-
-                    // ============================================
-                    // ÉXITO
-                    // ============================================
-
-                    mostrarMensajeExito(
-                        "🎄 ¡Gracias! Tu confirmación fue registrada correctamente."
-                    );
-
-                    formulario.reset();
-
-                    limpiarAcompanantes();
-                    limpiarChalecos();
-
-                    if (bloqueAcompanantes) {
-                        bloqueAcompanantes.style.display =
-                            "none";
-                    }
-
-                    if (bloqueChalecos) {
-                        bloqueChalecos.style.display =
-                            "none";
-                    }
-
-                }
-                catch (error) {
-
-                    console.error(
-                        "Error:",
-                        error
-                    );
-
-                    alert(
-                        "No fue posible registrar tu confirmación. " +
-                        "Por favor intenta nuevamente."
-                    );
-
-                }
-                finally {
-
-                    restaurarBoton();
-                }
-            }
+            enviarConfirmacion
         );
-    }
+}
 
-    // ============================================================
-    // FUNCIONES AUXILIARES
-    // ============================================================
 
-    function restaurarBoton() {
+// ============================================================
+// ENVIAR CONFIRMACIÓN
+// ============================================================
 
-        if (!formulario) {
-            return;
-        }
+async function enviarConfirmacion(event) {
 
-        const boton =
-            formulario.querySelector(
+    event.preventDefault();
+
+
+    const boton =
+        $("formAsistencia")
+            .querySelector(
                 'button[type="submit"]'
             );
 
-        if (boton) {
+
+    boton.disabled = true;
+
+    boton.textContent =
+        "⏳ Guardando...";
+
+
+    try {
+
+
+        // ====================================================
+        // DATOS PRINCIPALES
+        // ====================================================
+
+        const nombre =
+            $("nombreInvitado")
+                .value
+                .trim();
+
+
+        const asistira =
+            $("asistira").value;
+
+
+        if (!nombre) {
+
+            alert(
+                "Por favor indica tu nombre."
+            );
 
             boton.disabled = false;
 
             boton.textContent =
-                "Confirmar asistencia";
-        }
-    }
+                "✅ Confirmar datos";
 
-    function mostrarMensajeExito(
-        mensaje
-    ) {
-
-        let elemento =
-            document.getElementById(
-                "mensajeConfirmacion"
-            );
-
-        if (!elemento) {
-
-            elemento =
-                document.createElement("div");
-
-            elemento.id =
-                "mensajeConfirmacion";
-
-            formulario.parentNode.insertBefore(
-                elemento,
-                formulario
-            );
+            return;
         }
 
-        elemento.innerHTML =
-            `<p>${mensaje}</p>`;
 
-        elemento.style.display =
-            "block";
+        if (!asistira) {
 
-        elemento.scrollIntoView({
-            behavior: "smooth"
-        });
+            alert(
+                "Selecciona si asistirás."
+            );
+
+            boton.disabled = false;
+
+            boton.textContent =
+                "✅ Confirmar datos";
+
+            return;
+        }
+
+
+        // ====================================================
+        // ACOMPAÑANTES
+        // ====================================================
+
+        let nombresAcompanantes = [];
+
+
+        if (asistira === "si") {
+
+            const lleva =
+                $("llevaAcompanantes").value;
+
+
+            if (lleva === "1") {
+
+                nombresAcompanantes =
+                    Array.from(
+                        document.querySelectorAll(
+                            ".acompananteNombre"
+                        )
+                    )
+                    .map(
+                        input =>
+                            input.value.trim()
+                    )
+                    .filter(Boolean);
+            }
+        }
+
+
+        // ====================================================
+        // CHALECOS
+        // ====================================================
+
+        let participantesChalecos = [];
+
+
+        if (
+            asistira === "si" &&
+            $("participaChalecos").value === "si"
+        ) {
+
+            participantesChalecos =
+                Array.from(
+                    document.querySelectorAll(
+                        "#participantesChaleco .dynamic-card"
+                    )
+                )
+                .map(card => {
+
+                    const nombre =
+                        card.querySelector(
+                            ".chalecoNombre"
+                        )?.value.trim() || "";
+
+
+                    const talla =
+                        card.querySelector(
+                            ".chalecoTalla"
+                        )?.value || "";
+
+
+                    const color =
+                        card.querySelector(
+                            ".chalecoColor"
+                        )?.value.trim() || "";
+
+
+                    return {
+                        nombre,
+                        talla,
+                        color
+                    };
+                });
+        }
+
+
+        // ====================================================
+        // OBJETO A ENVIAR
+        // ====================================================
+
+        const datos = {
+
+            nombre:
+
+                nombre,
+
+
+            asistencia:
+
+                asistira === "si"
+                    ? "SI"
+                    : "NO",
+
+
+            acompanantes:
+
+                asistira === "si"
+                    ? nombresAcompanantes.length
+                    : 0,
+
+
+            nombresAcompanantes:
+
+                asistira === "si"
+                    ? nombresAcompanantes.join(", ")
+                    : "",
+
+
+            participaChalecos:
+
+                asistira === "si" &&
+                $("participaChalecos").value === "si"
+
+                    ? "SI"
+
+                    : "NO",
+
+
+            participantesChalecos:
+
+                asistira === "si" &&
+                $("participaChalecos").value === "si"
+
+                    ? participantesChalecos.length
+
+                    : 0,
+
+
+            detalleChalecos:
+
+                participantesChalecos.length > 0
+
+                    ? participantesChalecos
+                        .map(
+                            persona =>
+                                `${persona.nombre} | ${persona.talla} | ${persona.color}`
+                        )
+                        .join(" || ")
+
+                    : ""
+        };
+
+
+        console.log(
+            "Datos enviados:",
+            datos
+        );
+
+
+        // ====================================================
+        // ENVIAR A GOOGLE APPS SCRIPT
+        // ====================================================
+
+        const respuesta =
+            await fetch(
+                API_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+                    },
+
+                    body:
+                        JSON.stringify(datos)
+                }
+            );
+
+
+        const texto =
+            await respuesta.text();
+
+
+        console.log(
+            "Respuesta Google:",
+            texto
+        );
+
+
+        let resultado;
+
+
+        try {
+
+            resultado =
+                JSON.parse(texto);
+
+        } catch {
+
+            resultado = {
+                status: "OK"
+            };
+        }
+
+
+        if (
+            resultado.status &&
+            resultado.status !== "OK"
+        ) {
+
+            throw new Error(
+                resultado.message ||
+                "Google Apps Script devolvió un error."
+            );
+        }
+
+
+        // ====================================================
+        // MENSAJE EXITOSO
+        // ====================================================
+
+        $("resultado")
+            .classList
+            .remove("hidden");
+
+
+        $("resultado").innerHTML = `
+
+            <strong>
+                🎄 ¡Gracias, ${nombre}!
+            </strong>
+
+            <br><br>
+
+            Tu confirmación fue registrada
+            correctamente.
+
+        `;
+
+
+        $("resultado")
+            .scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+
+
+        // Limpiar formulario
+
+        $("formAsistencia").reset();
+
+        $("datosAsistencia")
+            .classList
+            .add("hidden");
+
+        $("cantidadAcompanantesWrap")
+            .classList
+            .add("hidden");
+
+        $("chalecosContainer")
+            .classList
+            .add("hidden");
+
+        $("acompanantesContainer")
+            .innerHTML = "";
+
+        $("participantesChaleco")
+            .innerHTML = "";
+
+
     }
+    catch (error) {
 
-});
+        console.error(
+            "Error al registrar:",
+            error
+        );
+
+
+        alert(
+            "No fue posible registrar la confirmación.\n\n" +
+            "Verifica la conexión e intenta nuevamente."
+        );
+
+    }
+    finally {
+
+        boton.disabled = false;
+
+        boton.textContent =
+            "✅ Confirmar datos";
+    }
+}
+
+
+// ============================================================
+// BOTONES PRINCIPALES
+// ============================================================
+
+function prepararBotones() {
+
+
+    // ========================================================
+    // CONFIRMAR ASISTENCIA
+    // ========================================================
+
+    $("btnConfirmar")
+        .addEventListener(
+            "click",
+            abrirFormulario
+        );
+
+
+    // ========================================================
+    // UBICACIÓN
+    // ========================================================
+
+    $("btnUbicacion")
+        .addEventListener(
+            "click",
+            () => {
+
+                if (
+                    POSADA_CONFIG.googleMapsUrl &&
+                    POSADA_CONFIG.googleMapsUrl.trim()
+                ) {
+
+                    window.open(
+                        POSADA_CONFIG.googleMapsUrl,
+                        "_blank"
+                    );
+
+                } else {
+
+                    const url =
+                        "https://www.google.com/maps/search/?api=1&query=" +
+                        encodeURIComponent(
+                            POSADA_CONFIG.direccion
+                        );
+
+
+                    window.open(
+                        url,
+                        "_blank"
+                    );
+                }
+            }
+        );
+
+
+    // ========================================================
+    // MÚSICA
+    // ========================================================
+
+    $("btnMusica")
+        .addEventListener(
+            "click",
+            async () => {
+
+                const audio =
+                    $("audioNavidad");
+
+                const boton =
+                    $("btnMusica");
+
+
+                try {
+
+                    if (audio.paused) {
+
+                        await audio.play();
+
+                        boton.textContent =
+                            "🔇 Silenciar música";
+
+                    } else {
+
+                        audio.pause();
+
+                        boton.textContent =
+                            "🔊 Activar música";
+                    }
+
+                }
+                catch {
+
+                    alert(
+                        "No se pudo reproducir la música.\n\n" +
+                        "Verifica que assets/navidad.mp3 exista."
+                    );
+                }
+            }
+        );
+}
+
+
+// ============================================================
+// INICIO
+// ============================================================
+
+cargarInvitacion();
+
+iniciarContador();
+
+prepararFormulario();
+
+prepararBotones();
