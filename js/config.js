@@ -18,7 +18,7 @@ const POSADA_CONFIG = {
 
     // Estilos disponibles:
     // "elegante", "tradicional", "nieve", "oscuro", "festivo"
-    estilo: "elegante",
+    estilo: "nieve",
 
     // Nombre del archivo de música dentro de /assets
     musica: "navidad.mp3",
