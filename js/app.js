@@ -7,7 +7,7 @@
 // CONFIGURACIÓN GOOGLE APPS SCRIPT
 // ============================================================
 
-    const API_URL = "https://script.google.com/macros/s/AKfycbzZCIlr-6a64alwZslgsZ2pX2UbBUvHukkvxv9rTfiug8jU5r72J3i7JyPNkehYGTrT/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbz_Q_O40W8Q2YMm_wOdbtJZJRhtFXYXqvpXIAGn2A4l6TD3bFhplFJ7zr1O61TxKxGk/exec";
 
 
 
