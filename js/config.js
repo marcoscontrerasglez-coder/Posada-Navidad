@@ -7,7 +7,7 @@ const POSADA_CONFIG = {
     nombre: "Posada Navideña 2026",
     fecha: "2026-12-24",
     hora: "20:00",
-    lugar: "Salón de Eventos Komanche",
+    lugar: "Salón de Eventos Komanche_2.0",
     direccion: "Av. Siempre viva, Querétaro, Qro.",
 
     // Pega aquí una URL de Google Maps si quieres usar un enlace directo.
